@@ -112,10 +112,6 @@ arquitectura_pipeline/
 │   ├── data_dictionary.md    # Diccionario de datos exhaustivo
 │   └── dashboard.md          # Especificación de dashboard analítico y medidas DAX
 │
-├── scripts/
-│   ├── run_pipeline.sh       # Script bash de ejecución directa
-│   └── run_tests.sh          # Script bash de testing
-│
 ├── docker-compose.yml        # Configuración de PostgreSQL y Airflow
 ├── requirements.txt          # Dependencias de Python
 ├── .env.example              # Plantilla de variables de entorno
@@ -191,13 +187,9 @@ docker compose ps
 - **Airflow UI:** disponible en [http://localhost:8080](http://localhost:8080) (usuario predeterminado: `admin`, contraseña generada en el log de inicio o configurada en standalone).
 
 ### Paso 3: Ejecutar el Pipeline Completo
-Puedes ejecutar el pipeline mediante el script CLI:
+Puedes ejecutar el pipeline directamente mediante el runner de Python:
 ```bash
-python src/pipeline.py
-```
-O usando el script bash:
-```bash
-./scripts/run_pipeline.sh
+python3 src/pipeline.py
 ```
 
 Salida esperada en consola:
@@ -236,10 +228,6 @@ Checks:
 Ejecuta la suite completa de pruebas:
 ```bash
 pytest -v
-```
-O usando el script auxiliar:
-```bash
-./scripts/run_tests.sh
 ```
 
 La suite cubre:
