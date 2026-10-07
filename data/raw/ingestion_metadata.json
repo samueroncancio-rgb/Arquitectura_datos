@@ -1,9 +1,9 @@
 {
-  "ingestion_timestamp": "2026-10-07T13:28:49.072751+00:00",
+  "ingestion_timestamp": "2026-10-07T17:33:59.858187+00:00",
   "source": "local_cache",
   "kaggle_dataset_configured": "bravehart101/sample-superstore-dataset",
   "raw_file_name": "superstore.csv",
-  "raw_file_path": "/home/samuel/Documentos/arquitectura_pipeline/data/raw/superstore.csv",
+  "raw_file_path": "/opt/airflow/data/raw/superstore.csv",
   "file_size_bytes": 2283431,
   "file_size_mb": 2.178,
   "row_count": 9994,

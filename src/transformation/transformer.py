@@ -7,7 +7,7 @@ Executes SQL scripts for:
 3. Gold layer (business aggregations and KPIs)
 """
 
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 

@@ -1,5 +1,3 @@
-version: '3.8'
-
 # ==============================================================================
 # Docker Compose for Superstore Data Pipeline
 # Provides:
@@ -58,7 +56,7 @@ services:
       POSTGRES_SCHEMA_SILVER: silver
       POSTGRES_SCHEMA_GOLD: gold
       # Additional python packages needed for pipeline inside Airflow
-      _PIP_ADDITIONAL_REQUIREMENTS: "pandas>=2.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 pytest>=8.0.0 python-dotenv>=1.0.0 requests>=2.31.0 kaggle>=1.6.0"
+      _PIP_ADDITIONAL_REQUIREMENTS: "pandas>=2.0.0 psycopg2-binary>=2.9.0 pytest>=8.0.0 python-dotenv>=1.0.0 requests>=2.31.0 kaggle>=1.6.0"
     volumes:
       - ./dags:/opt/airflow/dags
       - ./src:/opt/airflow/src

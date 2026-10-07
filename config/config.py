@@ -42,7 +42,7 @@ class PostgresConfig:
 
     @property
     def connection_uri(self) -> str:
-        return f"postgresql+psycopg://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
+        return f"postgresql+psycopg2://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
 
 
 @dataclass(frozen=True)
