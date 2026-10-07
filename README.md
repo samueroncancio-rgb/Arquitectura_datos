@@ -55,19 +55,49 @@ flowchart TD
 
 ---
 
-## 🛠️ 3. Tecnologías y Justificación Técnica
+### 💡 2.1 El Flujo Explicado de Forma Sencilla (Para Estudiantes y Exposiciones)
 
-| Tecnología | Rol en el Pipeline | Justificación |
+Para entender este proyecto como si estuviéramos repasando entre compañeros de estudio, imagínalo como una **planta de tratamiento de agua o una fábrica**: el dato entra "crudo y sucio" desde internet, pasa por filtros de control de calidad, se limpia, se ordena en estantes y termina convertido en un producto final listo para que la gerencia tome decisiones en dashboards (Power BI):
+
+1. **Ingesta (`src/ingestion/download.py` — El Repartidor):**  
+   Va a internet (usando la API de Kaggle o una réplica verificada) y descarga el archivo original en `data/raw/superstore.csv`. Registra su tamaño, fecha y un hash SHA-256 (su huella digital) para garantizar que el archivo fuente nunca sea alterado.
+2. **Validación (`src/validation/validator.py` — El Guardia de Seguridad):**  
+   Inspecciona el archivo antes de que toque la base de datos. Verifica que estén las 21 columnas esperadas, que no haya valores nulos prohibidos, que los precios sean positivos y que las fechas sean lógicas (`Ship Date >= Order Date`). Si existieran filas corruptas, las aísla en `data/errors/` explicando la razón del fallo.
+3. **Capa Raw (`raw.superstore` — La Fotocopia de Seguridad):**  
+   Copia el dataset en PostgreSQL tal cual viene en el CSV (guardando todo como texto). Sirve como respaldo fidedigno para auditorías futuras.
+4. **Capa Staging (`staging.superstore` — El Lavado de Cara Técnico):**  
+   Pone orden al formato: convierte nombres de columnas a `snake_case` (de `Order Date` a `order_date`), convierte tipos de datos a fechas (`DATE`) y números (`NUMERIC`), y calcula columnas operativas como `days_to_ship`.
+5. **Capa Silver (`silver.*` — El Orden de los Estantes / Star Schema):**  
+   En el archivo plano original el nombre de un cliente se repetía decenas de veces. En Silver separamos la información en un **modelo de estrella**:
+   - **Dimensiones:** `dim_customers` (793 clientes únicos), `dim_products` (1,862 productos deduplicados con su nombre más reciente), `dim_date` (un calendario completo con año, mes y fines de semana) y `dim_geography` (ubicaciones únicas).
+   - **Tabla de Hechos (`fact_sales`):** Contiene los números clave (`sales`, `quantity`, `discount`, `profit`) conectados a las dimensiones mediante llaves foráneas.
+6. **Capa Gold (`gold.*` — El Producto Listo para la Gerencia):**  
+   Genera datasets precalculados con KPIs de negocio para que las herramientas de BI no hagan cálculos lentos en vivo: ventas diarias/mensuales, rentabilidad por categoría, productos estrella vs generadores de pérdidas, y márgenes por estado.
+7. **Testing Automatizado (`tests/` — El Inspector de Calidad):**  
+   Ejecuta 21 pruebas automáticas con **Pytest** para validar que las matemáticas cuadren (por ejemplo: que la suma de ventas por categoría coincida exactamente con las ventas totales de la empresa) y que ninguna tabla esté vacía.
+8. **Orquestación (`dags/` — El Director de Orquesta):**  
+   **Apache Airflow** vigila y corre todo el pipeline de manera desatendida. Si algo falla, reintenta automáticamente o emite alertas.
+
+---
+
+## 🛠️ 3. Tecnologías y Librerías: ¿Qué Hace Cada Una?
+
+| Tecnología / Librería | ¿Qué es en palabras sencillas? | ¿Para qué la usamos en este proyecto? |
 | :--- | :--- | :--- |
-| **Python 3.x** | Lenguaje Principal | Modularidad, manejo de archivos, validación y testing. |
-| **PostgreSQL 16** | Data Warehouse / Base Analítica | Motor relacional robusto con soporte nativo de múltiples schemas (`raw`, `staging`, `silver`, `gold`). |
-| **SQL** | Transformaciones de Datos | Declarativo, auditable, performante y estándar de la industria para modelado dimensional y agregaciones. |
-| **Pandas / NumPy** | Inspección y Validación | Inspección exploratoria en memoria y validación declarativa de datos antes de impactar la base. |
-| **Apache Airflow** | Orquestador de Flujos (DAGs) | Programación de tareas, gestión de dependencias, reintentos automáticos, timeouts y monitoreo visual. |
-| **Pytest** | Testing Automatizado | Validación de aserciones de calidad de datos, pruebas unitarias y de integración. |
-| **Docker Compose** | Contenedorización Ligera | Despliegue reproducible de PostgreSQL y Airflow en un solo comando sin ensuciar el sistema anfitrión. |
+| **Python** | El capataz de la obra | Lenguaje principal que coordina todo: descarga archivos, corre validaciones y envía instrucciones a la base de datos. |
+| **PostgreSQL 16** | El almacén central | Motor de base de datos relacional donde viven los 4 schemas separados (`raw`, `staging`, `silver`, `gold`). |
+| **SQL** | El idioma del almacén | Las transformaciones pesadas (limpiar, deduplicar y agrupar KPIs) se ejecutan directamente en la base de datos con SQL por máxima velocidad. |
+| **Apache Airflow** | El despertador / Maestro de orquesta | Planifica y ejecuta el flujo completo de forma automática. Muestra un panel web visual para ver el progreso de cada tarea. |
+| **Docker Compose** | La caja portátil | Con un solo comando (`docker compose up -d`) levanta PostgreSQL y Airflow en contenedores aislados sin ensuciar tu computadora. |
+| **Pandas & NumPy** | La lupa analítica | Librerías para manipular tablas en memoria. Las usamos en la validación inicial y en el notebook EDA para revisar distribuciones y nulos. |
+| **SQLAlchemy** | El traductor universal | Permite que nuestro código Python se comunique de forma limpia y estructurada con bases de datos SQL. |
+| **Psycopg (psycopg3 / psycopg2)** | El cable de conexión | Driver que conecta físicamente a Python con PostgreSQL a través de la red (puerto 5432). |
+| **Kaggle API / Requests** | El mensajero de internet | Permite descargar datasets programáticamente desde Kaggle mediante autenticación por token, o descargar desde enlaces HTTP. |
+| **Pytest** | El auditor de calidad | Corre las 21 pruebas automáticas en segundos y nos da una luz verde si todo cumple con los supuestos de calidad. |
+| **Python-dotenv** | El cajón con llave | Lee las credenciales del archivo secreto `.env` para que contraseñas y claves API nunca queden expuestas en Git. |
 
 > **Nota:** No se introdujo Spark, Kafka, Kubernetes ni dbt para mantener el proyecto reproducible, simple y enfocado en los principios fundamentales de ingeniería de datos.
+
 
 ---
 
