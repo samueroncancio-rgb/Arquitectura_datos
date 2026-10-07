@@ -666,6 +666,8 @@ def generate_html_dashboard(output_path: Path = None) -> Path:
 """
 
     target_path.write_text(html_content, encoding="utf-8")
+    root_index = config.paths.base_dir / "index.html"
+    root_index.write_text(html_content, encoding="utf-8")
     return target_path
 
 
