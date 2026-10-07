@@ -1,0 +1,75 @@
+version: '3.8'
+
+# ==============================================================================
+# Docker Compose for Superstore Data Pipeline
+# Provides:
+# 1. PostgreSQL 16 (Analytical Database with Raw, Staging, Silver, Gold schemas)
+# 2. Apache Airflow (Pipeline Orchestration)
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL Analytics & Metadata Database
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: superstore_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: superstore_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d superstore_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # Apache Airflow (Standalone Scheduler + Webserver)
+  # ----------------------------------------------------------------------------
+  airflow:
+    image: apache/airflow:2.9.1-python3.11
+    container_name: superstore_airflow
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # Airflow Core
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: 'utc'
+      # PostgreSQL Configuration for pipeline tasks inside the container
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: superstore_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_SCHEMA_RAW: raw
+      POSTGRES_SCHEMA_STAGING: staging
+      POSTGRES_SCHEMA_SILVER: silver
+      POSTGRES_SCHEMA_GOLD: gold
+      # Additional python packages needed for pipeline inside Airflow
+      _PIP_ADDITIONAL_REQUIREMENTS: "pandas>=2.0.0 sqlalchemy>=2.0.0 psycopg2-binary>=2.9.0 pytest>=8.0.0 python-dotenv>=1.0.0 requests>=2.31.0 kaggle>=1.6.0"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./sql:/opt/airflow/sql
+      - ./config:/opt/airflow/config
+      - ./data:/opt/airflow/data
+      - ./tests:/opt/airflow/tests
+      - ./logs:/opt/airflow/logs
+      - ./.env:/opt/airflow/.env:ro
+    command: standalone
+
+volumes:
+  postgres_data:
+    driver: local
