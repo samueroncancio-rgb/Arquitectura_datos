@@ -116,7 +116,7 @@ arquitectura_pipeline/
 │   ├── validation/           # Reglas de validación y reporte de calidad
 │   ├── transformation/       # Ejecutor de scripts SQL de staging, silver y gold
 │   ├── loading/              # Carga idempotente en PostgreSQL
-│   ├── utils/                # Logging unificado y utilidades de base de datos
+│   ├── utils/                # Logging unificado, conexión a DB y generador de dashboard
 │   └── pipeline.py           # Orquestador ejecutable en línea de comandos (CLI)
 │
 ├── sql/
@@ -136,12 +136,14 @@ arquitectura_pipeline/
 │   └── test_database_quality.py # Pruebas de integración contra PostgreSQL
 │
 ├── notebooks/
-│   └── 01_exploration.ipynb  # Notebook de Análisis Exploratorio de Datos (EDA)
+│   └── 01_exploration.ipynb  # Notebook de EDA con gráficos (matplotlib/seaborn)
 │
 ├── docs/
 │   ├── data_dictionary.md    # Diccionario de datos exhaustivo
-│   └── dashboard.md          # Especificación de dashboard analítico y medidas DAX
+│   ├── dashboard.md          # Especificación de dashboard analítico y medidas DAX
+│   └── dashboard.html        # Dashboard analítico web interactivo
 │
+├── index.html                # Interfaz web del dashboard interactivo (raíz para localhost:8000)
 ├── docker-compose.yml        # Configuración de PostgreSQL y Airflow
 ├── requirements.txt          # Dependencias de Python
 ├── .env.example              # Plantilla de variables de entorno
@@ -243,6 +245,7 @@ Checks:
 ✓ Duplicate IDs
 ========================================
 2026-10-07 10:00:03 INFO Validation passed
+2026-10-07 10:00:03 INFO Visual Analytics Dashboard generated at: file:///.../docs/dashboard.html
 2026-10-07 10:00:05 INFO Raw table loaded
 2026-10-07 10:00:06 INFO Staging transformation completed
 2026-10-07 10:00:07 INFO Silver transformation completed
@@ -251,9 +254,31 @@ Checks:
 2026-10-07 10:00:09 INFO Pipeline executed successfully!
 ```
 
+### Paso 4: Visualizar el Dashboard Web Interactivo
+El pipeline compila automáticamente una interfaz web analítica con tema oscuro y gráficos dinámicos con **Chart.js**:
+
+1. Inicia el servidor web local:
+   ```bash
+   python3 -m http.server 8000
+   ```
+2. Abre en tu navegador:
+   👉 **[http://localhost:8000](http://localhost:8000)** (o abre directamente [docs/dashboard.html](docs/dashboard.html))
+
 ---
 
-## 🧪 7. Tests Automatizados de Calidad de Datos
+## 📊 7. Visualización Gráfica de los Datos (3 Formas Disponibles)
+
+El proyecto ofrece 3 modalidades para visualizar y analizar los resultados según el perfil de usuario:
+
+| Modalidad | Archivo / Acceso | Tecnologías | Uso Recomendado |
+| :--- | :--- | :--- | :--- |
+| **1. Dashboard Web Interactivo** | `http://localhost:8000` o `docs/dashboard.html` | HTML5, Vanilla CSS, Chart.js | Visualización instantánea en navegador sin dependencias ni bases de datos. |
+| **2. Jupyter Notebook** | [notebooks/01_exploration.ipynb](notebooks/01_exploration.ipynb) | Python, Matplotlib, Seaborn | Exploración estadística, distribuciones y análisis de sensibilidad de descuentos. |
+| **3. BI Profesional** | PostgreSQL `localhost:5432` | Power BI, Tableau, Metabase | Dashboards empresariales conectados a las capas `silver` y `gold` según [docs/dashboard.md](docs/dashboard.md). |
+
+---
+
+## 🧪 8. Tests Automatizados de Calidad de Datos
 
 Ejecuta la suite completa de pruebas:
 ```bash
@@ -268,7 +293,7 @@ La suite cubre:
 
 ---
 
-## 🗄️ 8. Arquitectura de Datos en PostgreSQL
+## 🗄️ 9. Arquitectura de Datos en PostgreSQL
 
 ```text
 PostgreSQL
@@ -293,7 +318,7 @@ PostgreSQL
 
 ---
 
-## 🔄 9. Estrategia de Idempotencia
+## 🔄 10. Estrategia de Idempotencia
 
 El pipeline está diseñado para ejecutarse repetidamente sin generar registros duplicados ni inconsistencias:
 1. **Capa Raw:** Ejecuta `TRUNCATE TABLE raw.superstore` antes de la inserción por lotes.
@@ -303,7 +328,7 @@ El pipeline está diseñado para ejecutarse repetidamente sin generar registros 
 
 ---
 
-## 📊 10. Métricas de Negocio Calculadas
+## 📊 11. Métricas de Negocio Calculadas
 
 | Métrica | Definición SQL / Fórmula | Significado de Negocio |
 | :--- | :--- | :--- |
@@ -319,7 +344,11 @@ El pipeline está diseñado para ejecutarse repetidamente sin generar registros 
 
 ---
 
-## 🔧 11. Solución de Problemas (Troubleshooting)
+## 🔧 12. Solución de Problemas (Troubleshooting)
+
+### Error al abrir http://localhost:8000 ("ERR_CONNECTION_REFUSED")
+- **Causa:** El servidor web local de Python no está corriendo en segundo plano.
+- **Solución:** Ejecuta `python3 -m http.server 8000 --bind 0.0.0.0` desde la raíz del proyecto.
 
 ### Error: "connection to server at 127.0.0.1, port 5432 failed"
 - **Causa:** El contenedor de PostgreSQL no está iniciado.
@@ -335,5 +364,5 @@ El pipeline está diseñado para ejecutarse repetidamente sin generar registros 
 
 ---
 
-## 📄 12. Licencia y Créditos
+## 📄 13. Licencia y Créditos
 Dataset original por Tableau / Kaggle (**Superstore Sales Dataset**). Diseñado con fines educativos y de práctica profesional en ingeniería de datos.
