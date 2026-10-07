@@ -46,6 +46,11 @@ def run_pipeline(force_download: bool = False, run_tests: bool = True) -> bool:
             logger.error("Pipeline stopped due to critical validation errors.")
             return False
 
+        # Generate Visual Analytics Dashboard
+        from src.utils.generate_dashboard import generate_html_dashboard
+        dashboard_path = generate_html_dashboard()
+        logger.info(f"Visual Analytics Dashboard generated at: file://{dashboard_path.resolve()}")
+
         # Step 3: Database Connection Check
         engine = get_db_engine()
         if not check_db_connection(engine):
